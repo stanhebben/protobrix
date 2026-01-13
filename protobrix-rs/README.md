@@ -5,6 +5,7 @@ A Rust library for building UI definitions using Protocol Buffers and JSON, with
 ## Features
 
 - **Builder Pattern API**: Ergonomic builders for constructing UI elements
+- **Queryable Tables**: Type-safe trait system for building queryable tables with filtering, sorting, and pagination
 - **Content Negotiation**: Automatic serialization/deserialization based on HTTP headers
 - **Actix-web Integration**: Built-in extractors and responders for Actix-web 4.4
 - **Dual Format Support**: Both JSON and Protocol Buffers
@@ -102,6 +103,79 @@ let table = AdvancedTableBuilder::new()
     .filterable(true)
     .build();
 ```
+
+### Building Queryable Tables
+
+For tables that need to handle complex queries (filtering, sorting, pagination), use the query trait system:
+
+```rust
+use protobrix_rs::*;
+use std::str::FromStr;
+
+// 1. Define your column enum
+#[derive(Debug, Clone, PartialEq)]
+enum UserColumn {
+    Id,
+    Name,
+    Email,
+}
+
+impl ToString for UserColumn {
+    fn to_string(&self) -> String {
+        match self {
+            UserColumn::Id => "id".to_string(),
+            UserColumn::Name => "name".to_string(),
+            UserColumn::Email => "email".to_string(),
+        }
+    }
+}
+
+impl FromStr for UserColumn {
+    type Err = ProtobrixError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "id" => Ok(UserColumn::Id),
+            "name" => Ok(UserColumn::Name),
+            "email" => Ok(UserColumn::Email),
+            _ => Err(ProtobrixError::InvalidColumn(s.to_string())),
+        }
+    }
+}
+
+// 2. Implement TableQueryable for your data source
+struct UserTable { /* your data source */ }
+
+impl TableQueryable for UserTable {
+    type Column = UserColumn;
+    type QueryBuilder = UserQueryBuilder;
+    
+    fn metadata(&self) -> TableMetadata {
+        TableMetadata {
+            columns: vec![
+                AdvancedTableColumnBuilder::new("id", "ID")
+                    .column_type(ColumnType::Int)
+                    .sortable()
+                    .column_index(1)
+                    .build(),
+                // ... more columns
+            ],
+            table_filterable: true,
+        }
+    }
+    
+    fn query_builder(&self) -> Self::QueryBuilder {
+        UserQueryBuilder::new(/* ... */)
+    }
+}
+
+// 3. Use in your endpoint
+async fn users_endpoint(request: AdvancedTableRequest) -> MainElement {
+    let table = UserTable::new();
+    table.load_table(&request, "Users", "/api/users/data").unwrap()
+}
+```
+
+See [`src/query_README.md`](src/query_README.md) for detailed documentation and [`examples/queryable_table.rs`](examples/queryable_table.rs) for a complete example.
 
 ## Actix-web Integration
 
@@ -326,6 +400,12 @@ Run the example server:
 
 ```bash
 cargo run --example actix_server
+```
+
+Run the queryable table example:
+
+```bash
+cargo run --example queryable_table
 ```
 
 Then test with curl:

@@ -10,6 +10,9 @@ pub mod error;
 // Builder pattern wrappers
 pub mod builders;
 
+// Query traits for queryable tables
+pub mod query;
+
 // Actix-web integration
 #[cfg(feature = "actix")]
 pub mod actix_integration;
@@ -18,6 +21,7 @@ pub mod actix_integration;
 pub use builders::*;
 pub use error::ProtobrixError;
 pub use proto::*;
+pub use query::*;
 
 #[cfg(feature = "actix")]
 pub use actix_integration::*;

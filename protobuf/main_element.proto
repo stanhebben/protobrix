@@ -130,6 +130,7 @@ message AdvancedTableRequestColumn {
   TableCellValue filter = 3;
   uint32 sort_index = 4;
   SortDirection sort_direction = 5;
+  bool hidden = 6;
 }
 
 enum SortDirection {

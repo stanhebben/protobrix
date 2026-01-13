@@ -20,6 +20,9 @@ pub enum ProtobrixError {
 
     #[error("Builder error: {0}")]
     Builder(String),
+
+    #[error("Invalid column: {0}")]
+    InvalidColumn(String),
 }
 
 // Actix-web integration
@@ -44,6 +47,9 @@ impl actix_web::ResponseError for ProtobrixError {
                 HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR)
                     .body(format!("Internal Server Error: {}", self))
             }
+            ProtobrixError::InvalidColumn(_) => {
+                HttpResponse::build(StatusCode::BAD_REQUEST).body(format!("Bad Request: {}", self))
+            }
         }
     }
 
@@ -60,6 +66,7 @@ impl actix_web::ResponseError for ProtobrixError {
             ProtobrixError::ProtobufEncode(_) | ProtobrixError::Builder(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
+            ProtobrixError::InvalidColumn(_) => StatusCode::BAD_REQUEST,
         }
     }
 }
