@@ -90,7 +90,7 @@ message AdvancedTableColumn {
   bool sortable = 5;
   bool searchable = 6;
   bool filterable = 7;
-  repeated TableCellValue possible_values = 8; // used by enums and filterable columns (not enforced by filterable columns)
+  repeated EnumValue possible_values = 8; // used by enums and filterable columns (not enforced by filterable columns)
   uint32 decimal_digits = 9; // only applicable for decimal and floating point values
   string unit = 10;
   RangeFilter range_filterable = 11;
@@ -105,11 +105,28 @@ enum ColumnType {
   COLUMN_TYPE_DECIMAL = 3;
   COLUMN_TYPE_FLOAT = 4;
   COLUMN_TYPE_DOUBLE = 5;
-  COLUMN_TYPE_DATE = 6;
-  COLUMN_TYPE_TIME = 7;
-  COLUMN_TYPE_DATETIME = 8;
+  COLUMN_TYPE_DATE = 6; // stored as ISO 8601 string
+  COLUMN_TYPE_TIME = 7; // stored as string in format HH:MM[:SS] in 24-hour format
+  COLUMN_TYPE_DATETIME = 8; // stored as ISO 8601 string
   COLUMN_TYPE_BOOLEAN = 9;
   COLUMN_TYPE_ENUM = 10;
+}
+
+message EnumValue {
+  oneof id {
+    uint32 id_int = 1;
+    string id_string = 2;
+  }
+  string label = 8;
+  EnumTagStyle tag_style = 9;
+}
+
+enum EnumTagStyle {
+  ENUM_TAG_STYLE_UNSPECIFIED = 0;
+  ENUM_TAG_STYLE_INFO = 1;
+  ENUM_TAG_STYLE_WARNING = 2;
+  ENUM_TAG_STYLE_ERROR = 3;
+  ENUM_TAG_STYLE_SUCCESS = 4;
 }
 
 message RangeFilter {

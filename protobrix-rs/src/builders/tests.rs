@@ -203,4 +203,69 @@ mod tests {
         assert_eq!(code_block.language, "rust");
         assert_eq!(code_block.text_spans.len(), 1);
     }
+
+    #[test]
+    fn test_enum_value_builder_with_int_id() {
+        let enum_value = EnumValueBuilder::new_int(1, "Active").success().build();
+
+        assert_eq!(enum_value.label, "Active");
+        assert_eq!(enum_value.tag_style, EnumTagStyle::Success as i32);
+
+        if let Some(enum_value::Id::IdInt(id)) = enum_value.id {
+            assert_eq!(id, 1);
+        } else {
+            panic!("Expected int ID");
+        }
+    }
+
+    #[test]
+    fn test_enum_value_builder_with_string_id() {
+        let enum_value = EnumValueBuilder::new_string("active", "Active")
+            .warning()
+            .build();
+
+        assert_eq!(enum_value.label, "Active");
+        assert_eq!(enum_value.tag_style, EnumTagStyle::Warning as i32);
+
+        if let Some(enum_value::Id::IdString(id)) = enum_value.id {
+            assert_eq!(id, "active");
+        } else {
+            panic!("Expected string ID");
+        }
+    }
+
+    #[test]
+    fn test_enum_value_builder_tag_styles() {
+        let info = EnumValueBuilder::new_int(1, "Info").info().build();
+        assert_eq!(info.tag_style, EnumTagStyle::Info as i32);
+
+        let warning = EnumValueBuilder::new_int(2, "Warning").warning().build();
+        assert_eq!(warning.tag_style, EnumTagStyle::Warning as i32);
+
+        let error = EnumValueBuilder::new_int(3, "Error").error().build();
+        assert_eq!(error.tag_style, EnumTagStyle::Error as i32);
+
+        let success = EnumValueBuilder::new_int(4, "Success").success().build();
+        assert_eq!(success.tag_style, EnumTagStyle::Success as i32);
+    }
+
+    #[test]
+    fn test_advanced_table_column_with_enum_values() {
+        let column = AdvancedTableColumnBuilder::new("status", "Status")
+            .column_type(ColumnType::Enum)
+            .filterable()
+            .add_possible_value(EnumValueBuilder::new_int(1, "Active").success().build())
+            .add_possible_value(EnumValueBuilder::new_int(2, "Inactive").warning().build())
+            .add_possible_value(EnumValueBuilder::new_int(3, "Error").error().build())
+            .build();
+
+        assert_eq!(column.id, "status");
+        assert_eq!(column.title, "Status");
+        assert_eq!(column.r#type, ColumnType::Enum as i32);
+        assert!(column.filterable);
+        assert_eq!(column.possible_values.len(), 3);
+        assert_eq!(column.possible_values[0].label, "Active");
+        assert_eq!(column.possible_values[1].label, "Inactive");
+        assert_eq!(column.possible_values[2].label, "Error");
+    }
 }

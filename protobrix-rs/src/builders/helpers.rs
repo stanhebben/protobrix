@@ -246,6 +246,72 @@ impl SimpleTableRowBuilder {
     }
 }
 
+/// Builder for EnumValue
+#[derive(Debug, Clone)]
+pub struct EnumValueBuilder {
+    id: Option<enum_value::Id>,
+    label: String,
+    tag_style: EnumTagStyle,
+}
+
+impl EnumValueBuilder {
+    /// Create a new EnumValue with an integer ID
+    pub fn new_int(id: u32, label: impl Into<String>) -> Self {
+        Self {
+            id: Some(enum_value::Id::IdInt(id)),
+            label: label.into(),
+            tag_style: EnumTagStyle::Unspecified,
+        }
+    }
+
+    /// Create a new EnumValue with a string ID
+    pub fn new_string(id: impl Into<String>, label: impl Into<String>) -> Self {
+        Self {
+            id: Some(enum_value::Id::IdString(id.into())),
+            label: label.into(),
+            tag_style: EnumTagStyle::Unspecified,
+        }
+    }
+
+    /// Set the tag style
+    pub fn tag_style(mut self, style: EnumTagStyle) -> Self {
+        self.tag_style = style;
+        self
+    }
+
+    /// Set tag style to info
+    pub fn info(mut self) -> Self {
+        self.tag_style = EnumTagStyle::Info;
+        self
+    }
+
+    /// Set tag style to warning
+    pub fn warning(mut self) -> Self {
+        self.tag_style = EnumTagStyle::Warning;
+        self
+    }
+
+    /// Set tag style to error
+    pub fn error(mut self) -> Self {
+        self.tag_style = EnumTagStyle::Error;
+        self
+    }
+
+    /// Set tag style to success
+    pub fn success(mut self) -> Self {
+        self.tag_style = EnumTagStyle::Success;
+        self
+    }
+
+    pub fn build(self) -> EnumValue {
+        EnumValue {
+            id: self.id,
+            label: self.label,
+            tag_style: self.tag_style as i32,
+        }
+    }
+}
+
 /// Builder for AdvancedTableColumn
 #[derive(Debug, Clone)]
 pub struct AdvancedTableColumnBuilder {
@@ -256,7 +322,7 @@ pub struct AdvancedTableColumnBuilder {
     sortable: bool,
     searchable: bool,
     filterable: bool,
-    possible_values: Vec<TableCellValue>,
+    possible_values: Vec<EnumValue>,
     decimal_digits: u32,
     unit: String,
     range_filterable: Option<RangeFilter>,
@@ -308,8 +374,13 @@ impl AdvancedTableColumnBuilder {
         self
     }
 
-    pub fn possible_values(mut self, values: Vec<TableCellValue>) -> Self {
+    pub fn possible_values(mut self, values: Vec<EnumValue>) -> Self {
         self.possible_values = values;
+        self
+    }
+
+    pub fn add_possible_value(mut self, value: EnumValue) -> Self {
+        self.possible_values.push(value);
         self
     }
 
