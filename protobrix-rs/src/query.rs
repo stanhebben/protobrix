@@ -8,6 +8,7 @@ use std::str::FromStr;
 pub struct TableMetadata {
     pub columns: Vec<AdvancedTableColumn>,
     pub table_filterable: bool,
+    pub action_buttons: Vec<ActionButton>,
 }
 
 /// Sort specification for a column
@@ -130,8 +131,8 @@ impl<T: TableQueryable> TableQueryableExt for T {
                 builder.search_column(column.clone(), &col_request.search);
             }
 
-            // Apply column filter
-            if let Some(filter) = &col_request.filter {
+            // Apply column filters (multiple values)
+            for filter in &col_request.filters {
                 builder.filter_column(column.clone(), filter.clone());
             }
         }
@@ -189,6 +190,11 @@ impl<T: TableQueryable> TableQueryableExt for T {
         // Add columns
         for column in metadata.columns {
             builder = builder.add_column(column);
+        }
+
+        // Add action buttons
+        for action_button in metadata.action_buttons {
+            builder = builder.add_action_button(action_button);
         }
 
         // Add rows
@@ -333,7 +339,18 @@ mod tests {
             ];
 
             // Filter rows based on column filters
+            // Group filters by column for OR logic within same column
+            use std::collections::HashMap;
+            let mut filters_by_column: HashMap<TestColumn, Vec<&TableCellValue>> = HashMap::new();
             for (column, filter_value) in &self.column_filters {
+                filters_by_column
+                    .entry(column.clone())
+                    .or_insert_with(Vec::new)
+                    .push(filter_value);
+            }
+
+            // Apply filters with OR logic for same column, AND logic across columns
+            for (column, filter_values) in &filters_by_column {
                 rows.retain(|row| {
                     let col_idx = match column {
                         TestColumn::Id => 0,
@@ -341,7 +358,10 @@ mod tests {
                         TestColumn::Age => 2,
                     };
                     if let Some(cell) = row.cells.get(col_idx) {
-                        cell.value == filter_value.value
+                        // OR logic: match any of the filter values for this column
+                        filter_values
+                            .iter()
+                            .any(|filter_value| cell.value == filter_value.value)
                     } else {
                         false
                     }
@@ -402,6 +422,7 @@ mod tests {
                         .build(),
                 ],
                 table_filterable: true,
+                action_buttons: Vec::new(),
             }
         }
 
@@ -418,7 +439,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "id".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -426,7 +447,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "name".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -434,7 +455,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "age".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -460,7 +481,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "id".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -468,7 +489,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "name".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -493,9 +514,9 @@ mod tests {
             columns: vec![AdvancedTableRequestColumn {
                 id: "age".to_string(),
                 search: String::new(),
-                filter: Some(TableCellValue {
+                filters: vec![TableCellValue {
                     value: Some(table_cell_value::Value::IntValue(30)),
-                }),
+                }],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -519,7 +540,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "id".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -527,7 +548,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "name".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -535,7 +556,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "age".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -578,7 +599,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "id".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -586,7 +607,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "name".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: false,
@@ -594,7 +615,7 @@ mod tests {
                 AdvancedTableRequestColumn {
                     id: "age".to_string(),
                     search: String::new(),
-                    filter: None,
+                    filters: Vec::new(),
                     sort_index: 0,
                     sort_direction: SortDirection::Unspecified as i32,
                     hidden: true, // This column should be excluded from results

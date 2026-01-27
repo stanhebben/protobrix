@@ -1,6 +1,57 @@
 use crate::error::ProtobrixError;
 use crate::proto::*;
 
+/// Builder for Parameter
+#[derive(Debug, Clone)]
+pub struct ParameterBuilder {
+    name: String,
+    value: String,
+}
+
+impl ParameterBuilder {
+    pub fn new(name: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            value: value.into(),
+        }
+    }
+
+    pub fn build(self) -> Parameter {
+        Parameter {
+            name: self.name,
+            value: self.value,
+        }
+    }
+}
+
+/// Helper function to create a Parameter directly
+pub fn parameter(name: impl Into<String>, value: impl Into<String>) -> Parameter {
+    ParameterBuilder::new(name, value).build()
+}
+
+/// Macro to create a vector of Parameters with a map-like syntax
+///
+/// # Examples
+///
+/// ```
+/// use protobrix_rs::parameters;
+///
+/// let params = parameters! {
+///     "user_id" => "123",
+///     "action" => "edit",
+/// };
+/// ```
+#[macro_export]
+macro_rules! parameters {
+    ($($key:expr => $value:expr),* $(,)?) => {
+        vec![
+            $(
+                $crate::parameter($key, $value),
+            )*
+        ]
+    };
+}
+
 /// Builder for TextSpan
 #[derive(Debug, Clone, Default)]
 pub struct TextSpanBuilder {
@@ -184,6 +235,48 @@ impl ActionButtonBuilder {
     pub fn open_modal(mut self, url: impl Into<String>) -> Self {
         self.action = Some(action_button::Action::OpenModal(OpenModalAction {
             url: url.into(),
+        }));
+        self
+    }
+
+    pub fn open_confirmation_modal(
+        mut self,
+        action_url: impl Into<String>,
+        url_method: UrlMethod,
+        title: impl Into<String>,
+        message: impl Into<String>,
+        confirm_button_label: impl Into<String>,
+        cancel_button_label: impl Into<String>,
+    ) -> Self {
+        self.action = Some(action_button::Action::OpenConfirmationModal(
+            OpenConfirmationModalAction {
+                title: title.into(),
+                message: message.into(),
+                confirm_button_label: confirm_button_label.into(),
+                cancel_button_label: cancel_button_label.into(),
+                action_url: action_url.into(),
+                url_method: url_method as i32,
+            },
+        ));
+        self
+    }
+
+    pub fn builtin_action(mut self, action: impl Into<String>) -> Self {
+        self.action = Some(action_button::Action::BuiltinAction(RunBuiltinAction {
+            action: action.into(),
+            parameters: Vec::new(),
+        }));
+        self
+    }
+
+    pub fn builtin_action_with_params(
+        mut self,
+        action: impl Into<String>,
+        parameters: Vec<Parameter>,
+    ) -> Self {
+        self.action = Some(action_button::Action::BuiltinAction(RunBuiltinAction {
+            action: action.into(),
+            parameters,
         }));
         self
     }

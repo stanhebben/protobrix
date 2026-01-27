@@ -319,8 +319,45 @@ ListBuilder::new()
 ```rust
 ActionButtonBuilder::new("Button Label")
     .icon("fas:check")
-    .go_to_url("/url")           // Or: .open_page("/url") or .open_modal("/url")
-    .build()?                     // Returns Result<ActionButton, ProtobrixError>
+    .go_to_url("/url")                    // Navigate to URL
+    // Or: .open_page("/url")             // Open page
+    // Or: .open_modal("/url")            // Open modal
+    // Or: .open_confirmation_modal(...)  // Open confirmation dialog
+    // Or: .builtin_action("action_name") // Run builtin action
+    .build()?                              // Returns Result<ActionButton, ProtobrixError>
+```
+
+**Builtin Actions with Parameters:**
+
+```rust
+use protobrix_rs::{ActionButtonBuilder, parameters};
+
+// Simple builtin action without parameters
+ActionButtonBuilder::new("Create User")
+    .icon("fas:user-plus")
+    .builtin_action("create_user")
+    .build()?
+
+// Builtin action with parameters using the macro
+ActionButtonBuilder::new("Edit User")
+    .icon("fas:edit")
+    .builtin_action_with_params(
+        "edit_user",
+        parameters! {
+            "user_id" => "123",
+            "mode" => "edit",
+        }
+    )
+    .build()?
+
+// Builtin action with parameters using the helper function
+ActionButtonBuilder::new("Delete Item")
+    .icon("fas:trash")
+    .builtin_action_with_params(
+        "delete_item",
+        vec![parameter("item_id", "456")]
+    )
+    .build()?
 ```
 
 #### SimpleTableRowBuilder

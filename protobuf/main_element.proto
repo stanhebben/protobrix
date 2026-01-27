@@ -144,7 +144,7 @@ message AdvancedTableRequest {
 message AdvancedTableRequestColumn {
   string id = 1;
   string search = 2;
-  TableCellValue filter = 3;
+  repeated TableCellValue filters = 3;
   uint32 sort_index = 4;
   SortDirection sort_direction = 5;
   bool hidden = 6;
@@ -178,6 +178,8 @@ message ActionButton {
     GoToUrlAction go_to_url = 8;
     OpenPageAction open_page = 9;
     OpenModalAction open_modal = 10;
+    OpenConfirmationModalAction open_confirmation_modal = 11;
+    RunBuiltinAction builtin_action = 12;
   }
 }
 
@@ -191,4 +193,31 @@ message OpenPageAction {
 
 message OpenModalAction {
   string url = 1;
+}
+
+message RunBuiltinAction {
+  string action = 1;
+  repeated Parameter parameters = 2;
+}
+
+message Parameter {
+  string name = 1;
+  string value = 2;
+}
+
+message OpenConfirmationModalAction {
+  string title = 1;
+  string message = 2;
+  string confirm_button_label = 3;
+  string cancel_button_label = 4;
+  string action_url = 5;
+  UrlMethod url_method = 6;
+}
+
+enum UrlMethod {
+  URL_METHOD_UNSPECIFIED = 0;
+  URL_METHOD_GET = 1;
+  URL_METHOD_POST = 2;
+  URL_METHOD_PUT = 3;
+  URL_METHOD_DELETE = 4;
 }
