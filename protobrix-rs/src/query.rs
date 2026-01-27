@@ -158,12 +158,31 @@ impl<T: TableQueryable> TableQueryableExt for T {
         }
 
         // Extract columns to return from request (excluding hidden columns)
-        let columns_to_return: Vec<T::Column> = request
-            .columns
-            .iter()
-            .filter(|col| !col.hidden)
-            .map(|col| T::Column::from_str(&col.id))
-            .collect::<Result<Vec<_>, _>>()?;
+        // If no columns specified in request, use all columns from metadata
+        let columns_to_return: Vec<T::Column> = if request.columns.is_empty() {
+            // Default to visible columns from metadata, sorted by column index
+            let metadata = self.metadata();
+            let mut visible_cols: Vec<_> = metadata
+                .columns
+                .iter()
+                .filter(|col| col.column > 0) // Only visible columns
+                .collect();
+
+            // Sort by column index
+            visible_cols.sort_by_key(|col| col.column);
+
+            visible_cols
+                .into_iter()
+                .map(|col| T::Column::from_str(&col.id))
+                .collect::<Result<Vec<_>, _>>()?
+        } else {
+            request
+                .columns
+                .iter()
+                .filter(|col| !col.hidden)
+                .map(|col| T::Column::from_str(&col.id))
+                .collect::<Result<Vec<_>, _>>()?
+        };
 
         // Execute query
         builder.execute(&columns_to_return)
