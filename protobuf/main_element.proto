@@ -159,6 +159,14 @@ enum SortDirection {
 message AdvancedTableRow {
   repeated TableCellValue cells = 1;
   repeated ActionButton action_buttons = 2;
+
+  oneof row_action {
+    GoToUrlAction go_to_url = 8;
+    OpenPageAction open_page = 9;
+    OpenModalAction open_modal = 10;
+    OpenConfirmationModalAction open_confirmation_modal = 11;
+    RunBuiltinAction builtin_action = 12;
+  }
 }
 
 message TableCellValue {

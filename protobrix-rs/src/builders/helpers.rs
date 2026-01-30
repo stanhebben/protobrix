@@ -529,6 +529,7 @@ impl AdvancedTableColumnBuilder {
 pub struct AdvancedTableRowBuilder {
     cells: Vec<TableCellValue>,
     action_buttons: Vec<ActionButton>,
+    row_action: Option<advanced_table_row::RowAction>,
 }
 
 impl AdvancedTableRowBuilder {
@@ -581,10 +582,84 @@ impl AdvancedTableRowBuilder {
         self
     }
 
+    /// Set the row action to navigate to a URL
+    pub fn row_action_go_to_url(mut self, url: impl Into<String>) -> Self {
+        self.row_action = Some(advanced_table_row::RowAction::GoToUrl(GoToUrlAction {
+            url: url.into(),
+        }));
+        self
+    }
+
+    /// Set the row action to open a page
+    pub fn row_action_open_page(mut self, url: impl Into<String>) -> Self {
+        self.row_action = Some(advanced_table_row::RowAction::OpenPage(OpenPageAction {
+            url: url.into(),
+        }));
+        self
+    }
+
+    /// Set the row action to open a modal
+    pub fn row_action_open_modal(mut self, url: impl Into<String>) -> Self {
+        self.row_action = Some(advanced_table_row::RowAction::OpenModal(OpenModalAction {
+            url: url.into(),
+        }));
+        self
+    }
+
+    /// Set the row action to open a confirmation modal
+    pub fn row_action_open_confirmation_modal(
+        mut self,
+        action_url: impl Into<String>,
+        url_method: UrlMethod,
+        title: impl Into<String>,
+        message: impl Into<String>,
+        confirm_button_label: impl Into<String>,
+        cancel_button_label: impl Into<String>,
+    ) -> Self {
+        self.row_action = Some(advanced_table_row::RowAction::OpenConfirmationModal(
+            OpenConfirmationModalAction {
+                title: title.into(),
+                message: message.into(),
+                confirm_button_label: confirm_button_label.into(),
+                cancel_button_label: cancel_button_label.into(),
+                action_url: action_url.into(),
+                url_method: url_method as i32,
+            },
+        ));
+        self
+    }
+
+    /// Set the row action to run a builtin action
+    pub fn row_action_builtin(mut self, action: impl Into<String>) -> Self {
+        self.row_action = Some(advanced_table_row::RowAction::BuiltinAction(
+            RunBuiltinAction {
+                action: action.into(),
+                parameters: Vec::new(),
+            },
+        ));
+        self
+    }
+
+    /// Set the row action to run a builtin action with parameters
+    pub fn row_action_builtin_with_params(
+        mut self,
+        action: impl Into<String>,
+        parameters: Vec<Parameter>,
+    ) -> Self {
+        self.row_action = Some(advanced_table_row::RowAction::BuiltinAction(
+            RunBuiltinAction {
+                action: action.into(),
+                parameters,
+            },
+        ));
+        self
+    }
+
     pub fn build(self) -> AdvancedTableRow {
         AdvancedTableRow {
             cells: self.cells,
             action_buttons: self.action_buttons,
+            row_action: self.row_action,
         }
     }
 }
