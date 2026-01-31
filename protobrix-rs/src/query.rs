@@ -74,7 +74,7 @@ pub trait TableQueryBuilder {
     fn sort(&mut self, sorts: &[SortColumn<Self::Column>]) -> &mut Self;
 
     /// Execute query and return rows with only specified columns
-    fn execute(&self, columns: &[Self::Column]) -> Result<Vec<AdvancedTableRow>, ProtobrixError>;
+    fn execute(self, columns: &[Self::Column]) -> Result<Vec<AdvancedTableRow>, ProtobrixError>;
 }
 
 /// Extension trait providing convenience methods for loading table data
@@ -374,7 +374,7 @@ mod tests {
         }
 
         fn execute(
-            &self,
+            self,
             columns: &[Self::Column],
         ) -> Result<Vec<AdvancedTableRow>, ProtobrixError> {
             // Return mock data

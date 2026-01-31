@@ -13,10 +13,12 @@ derive_builder = "0.20"
 thiserror = "2.0"
 bytes = { version = "1.5", optional = true }
 futures-util = { version = "0.3", optional = true }
+chrono = { version = "0.4", optional = true }
 
 [build-dependencies]
 prost-build = "0.13"
 
 [features]
-default = ["actix"]
+default = ["actix", "chrono"]
 actix = ["dep:actix-web", "dep:bytes", "dep:futures-util"]
+chrono = ["dep:chrono"]

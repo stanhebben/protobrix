@@ -107,7 +107,7 @@ impl TableQueryBuilder for UserQueryBuilder {
         self
     }
 
-    fn execute(&self, columns: &[Self::Column]) -> Result<Vec<AdvancedTableRow>, ProtobrixError> {
+    fn execute(self, columns: &[Self::Column]) -> Result<Vec<AdvancedTableRow>, ProtobrixError> {
         let mut filtered_data: Vec<&UserData> = self.data.iter().collect();
 
         // Apply global search
@@ -211,6 +211,7 @@ impl TableQueryBuilder for UserQueryBuilder {
                             .build()
                             .unwrap(),
                     ],
+                    row_action: None,
                 }
             })
             .collect();
@@ -270,6 +271,9 @@ impl TableQueryable for UserTable {
 
     fn metadata(&self) -> TableMetadata {
         TableMetadata {
+            table_name: "users".to_string(),
+            table_filterable: true,
+            action_buttons: vec![],
             columns: vec![
                 AdvancedTableColumnBuilder::new("id", "ID")
                     .column_type(ColumnType::Int)
@@ -302,7 +306,6 @@ impl TableQueryable for UserTable {
                     .column_index(4)
                     .build(),
             ],
-            table_filterable: true,
         }
     }
 
@@ -323,7 +326,7 @@ fn main() {
             AdvancedTableRequestColumn {
                 id: "id".to_string(),
                 search: String::new(),
-                filter: None,
+                filters: vec![],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -331,7 +334,7 @@ fn main() {
             AdvancedTableRequestColumn {
                 id: "name".to_string(),
                 search: String::new(),
-                filter: None,
+                filters: vec![],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -339,7 +342,7 @@ fn main() {
             AdvancedTableRequestColumn {
                 id: "email".to_string(),
                 search: String::new(),
-                filter: None,
+                filters: vec![],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -347,7 +350,7 @@ fn main() {
             AdvancedTableRequestColumn {
                 id: "age".to_string(),
                 search: String::new(),
-                filter: None,
+                filters: vec![],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -376,7 +379,7 @@ fn main() {
             AdvancedTableRequestColumn {
                 id: "id".to_string(),
                 search: String::new(),
-                filter: None,
+                filters: vec![],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -384,7 +387,7 @@ fn main() {
             AdvancedTableRequestColumn {
                 id: "name".to_string(),
                 search: String::new(),
-                filter: None,
+                filters: vec![],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -416,7 +419,7 @@ fn main() {
             AdvancedTableRequestColumn {
                 id: "name".to_string(),
                 search: String::new(),
-                filter: None,
+                filters: vec![],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -424,9 +427,9 @@ fn main() {
             AdvancedTableRequestColumn {
                 id: "age".to_string(),
                 search: String::new(),
-                filter: Some(TableCellValue {
+                filters: vec![TableCellValue {
                     value: Some(table_cell_value::Value::IntValue(30)),
-                }),
+                }],
                 sort_index: 0,
                 sort_direction: SortDirection::Unspecified as i32,
                 hidden: false,
@@ -461,7 +464,7 @@ fn main() {
         columns: vec![AdvancedTableRequestColumn {
             id: "name".to_string(),
             search: String::new(),
-            filter: None,
+            filters: vec![],
             sort_index: 1,
             sort_direction: SortDirection::Asc as i32,
             hidden: false,
@@ -491,7 +494,7 @@ fn main() {
         columns: vec![AdvancedTableRequestColumn {
             id: "name".to_string(),
             search: String::new(),
-            filter: None,
+            filters: vec![],
             sort_index: 0,
             sort_direction: SortDirection::Unspecified as i32,
             hidden: false,
