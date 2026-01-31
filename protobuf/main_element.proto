@@ -80,6 +80,7 @@ message AdvancedTable {
   repeated AdvancedTableColumn columns = 2;
   repeated AdvancedTableRow rows = 3;
   bool table_filterable = 4;
+  string name = 5; // used to store table settings
 }
 
 message AdvancedTableColumn {

@@ -9,6 +9,7 @@ pub struct TableMetadata {
     pub columns: Vec<AdvancedTableColumn>,
     pub table_filterable: bool,
     pub action_buttons: Vec<ActionButton>,
+    pub table_name: String,
 }
 
 /// Sort specification for a column
@@ -91,6 +92,53 @@ pub trait TableQueryableExt: TableQueryable {
         title: &str,
         url: &str,
     ) -> Result<MainElement, ProtobrixError>;
+}
+
+/// Apply request column configuration to metadata columns
+///
+/// If the request contains column configuration, this function:
+/// - Reorders columns according to the request order
+/// - Updates visibility (column index: 0 for hidden, 1-based for visible)
+/// - Applies sort direction from the request
+fn apply_column_configuration(
+    metadata_columns: Vec<AdvancedTableColumn>,
+    request: &AdvancedTableRequest,
+) -> Vec<AdvancedTableColumn> {
+    if request.columns.is_empty() {
+        return metadata_columns;
+    }
+
+    // Create a map of metadata columns for quick lookup
+    let mut col_map: std::collections::HashMap<String, AdvancedTableColumn> = metadata_columns
+        .into_iter()
+        .map(|col| (col.id.clone(), col))
+        .collect();
+
+    // Build final column list in request order, applying visibility and sort settings
+    request
+        .columns
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, req_col)| {
+            col_map.get_mut(&req_col.id).map(|col| {
+                // Update visibility (column index)
+                if !req_col.hidden {
+                    col.column = (idx + 1) as u32; // 1-based column index for visible columns
+                } else {
+                    col.column = 0; // Hidden
+                }
+
+                // Update sort direction
+                if req_col.sort_index > 0 {
+                    col.sort_direction = req_col.sort_direction;
+                } else {
+                    col.sort_direction = SortDirection::Unspecified as i32;
+                }
+
+                col.clone()
+            })
+        })
+        .collect()
 }
 
 /// Blanket implementation of TableQueryableExt for all TableQueryable types
@@ -204,10 +252,14 @@ impl<T: TableQueryable> TableQueryableExt for T {
         let mut builder = AdvancedTableBuilder::new()
             .title(title)
             .url(url)
-            .filterable(metadata.table_filterable);
+            .filterable(metadata.table_filterable)
+            .name(&metadata.table_name);
+
+        // Apply request column configuration to metadata columns if present
+        let final_columns = apply_column_configuration(metadata.columns, request);
 
         // Add columns
-        for column in metadata.columns {
+        for column in final_columns {
             builder = builder.add_column(column);
         }
 
@@ -230,7 +282,7 @@ mod tests {
     use super::*;
 
     // Mock column enum for testing
-    #[derive(Debug, Clone, PartialEq)]
+    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
     enum TestColumn {
         Id,
         Name,
@@ -340,6 +392,7 @@ mod tests {
                         },
                     ],
                     action_buttons: Vec::new(),
+                    row_action: None,
                 },
                 AdvancedTableRow {
                     cells: vec![
@@ -354,6 +407,7 @@ mod tests {
                         },
                     ],
                     action_buttons: Vec::new(),
+                    row_action: None,
                 },
             ];
 
@@ -442,6 +496,7 @@ mod tests {
                 ],
                 table_filterable: true,
                 action_buttons: Vec::new(),
+                table_name: "test_table".to_string(),
             }
         }
 

@@ -9,6 +9,7 @@ pub struct AdvancedTableBuilder {
     columns: Vec<AdvancedTableColumn>,
     rows: Vec<AdvancedTableRow>,
     table_filterable: bool,
+    name: String,
 }
 
 impl AdvancedTableBuilder {
@@ -20,6 +21,7 @@ impl AdvancedTableBuilder {
             columns: Vec::new(),
             rows: Vec::new(),
             table_filterable: false,
+            name: String::new(),
         }
     }
 
@@ -59,6 +61,12 @@ impl AdvancedTableBuilder {
         self
     }
 
+    /// Set the table name (used for storing user settings)
+    pub fn name(mut self, name: impl Into<String>) -> Self {
+        self.name = name.into();
+        self
+    }
+
     /// Build the MainElement
     pub fn build(self) -> MainElement {
         MainElement {
@@ -69,6 +77,7 @@ impl AdvancedTableBuilder {
                 columns: self.columns,
                 rows: self.rows,
                 table_filterable: self.table_filterable,
+                name: self.name,
             })),
         }
     }
