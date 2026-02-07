@@ -1,3 +1,5 @@
+use std::mem;
+
 use crate::proto::*;
 
 /// Extension trait for creating TableCellValue instances with convenience methods
@@ -42,6 +44,12 @@ pub trait TableCellValueExt {
     /// Requires the "chrono" feature to be enabled
     #[cfg(feature = "chrono")]
     fn datetime(dt: Option<chrono::NaiveDateTime>) -> TableCellValue;
+
+    /// Create a TableCellValue from a string and take ownership of the string
+    fn take_string(value: &mut String) -> TableCellValue;
+
+    /// Create a TableCellValue from an Option<String> and take ownership of the string
+    fn take_opt_string(value: &mut Option<String>) -> TableCellValue;
 
     // Conversion methods (extracting values from TableCellValue)
 
@@ -146,6 +154,16 @@ impl TableCellValueExt for TableCellValue {
         TableCellValue {
             value: Some(table_cell_value::Value::StringValue(date_str)),
         }
+    }
+
+    fn take_string(value: &mut String) -> TableCellValue {
+        TableCellValue {
+            value: Some(table_cell_value::Value::StringValue(mem::take(value))),
+        }
+    }
+
+    fn take_opt_string(value: &mut Option<String>) -> TableCellValue {
+        TableCellValue::opt_string(mem::take(value))
     }
 
     fn as_string(&self) -> Option<String> {
