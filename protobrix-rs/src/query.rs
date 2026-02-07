@@ -41,7 +41,7 @@ impl<C> SortColumn<C> {
 
 /// Trait for queryable tables
 pub trait TableQueryable {
-    type Column: ToString + FromStr<Err = ProtobrixError> + Clone;
+    type Column: FromStr<Err = ProtobrixError> + Clone;
     type QueryBuilder: TableQueryBuilder<Column = Self::Column>;
 
     fn metadata(&self) -> TableMetadata;
@@ -50,7 +50,7 @@ pub trait TableQueryable {
 
 /// Trait for building and executing table queries
 pub trait TableQueryBuilder {
-    type Column: ToString + FromStr<Err = ProtobrixError> + Clone;
+    type Column: FromStr<Err = ProtobrixError> + Clone;
 
     /// Apply global search across searchable columns
     fn search(&mut self, search: &str) -> &mut Self;
