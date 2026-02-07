@@ -42,15 +42,17 @@ impl<C> SortColumn<C> {
 /// Trait for queryable tables
 pub trait TableQueryable {
     type Column: FromStr<Err = ProtobrixError> + Clone;
-    type QueryBuilder: TableQueryBuilder<Column = Self::Column>;
+    type QueryBuilder: TableQueryBuilder<Column = Self::Column, Connection = Self::Connection>;
+    type Connection;
 
-    fn metadata(&self) -> TableMetadata;
+    fn metadata(&self, conn: &mut Self::Connection) -> TableMetadata;
     fn query_builder(&self) -> Self::QueryBuilder;
 }
 
 /// Trait for building and executing table queries
 pub trait TableQueryBuilder {
     type Column: FromStr<Err = ProtobrixError> + Clone;
+    type Connection;
 
     /// Apply global search across searchable columns
     fn search(&mut self, search: &str) -> &mut Self;
@@ -74,7 +76,11 @@ pub trait TableQueryBuilder {
     fn sort(&mut self, sorts: &[SortColumn<Self::Column>]) -> &mut Self;
 
     /// Execute query and return rows with only specified columns
-    fn execute(self, columns: &[Self::Column]) -> Result<Vec<AdvancedTableRow>, ProtobrixError>;
+    fn execute(
+        self,
+        conn: &mut Self::Connection,
+        columns: &[Self::Column],
+    ) -> Result<Vec<AdvancedTableRow>, ProtobrixError>;
 }
 
 /// Extension trait providing convenience methods for loading table data
@@ -82,12 +88,14 @@ pub trait TableQueryableExt: TableQueryable {
     /// Load rows based on an AdvancedTableRequest
     fn load_rows(
         &self,
+        conn: &mut Self::Connection,
         request: AdvancedTableRequest,
     ) -> Result<Vec<AdvancedTableRow>, ProtobrixError>;
 
     /// Load a complete MainElement based on an AdvancedTableRequest
     fn load_table(
         &self,
+        conn: &mut Self::Connection,
         request: AdvancedTableRequest,
         title: String,
         url: String,
@@ -145,6 +153,7 @@ fn apply_column_configuration(
 impl<T: TableQueryable> TableQueryableExt for T {
     fn load_rows(
         &self,
+        conn: &mut Self::Connection,
         request: AdvancedTableRequest,
     ) -> Result<Vec<AdvancedTableRow>, ProtobrixError> {
         let mut builder = self.query_builder();
@@ -209,7 +218,7 @@ impl<T: TableQueryable> TableQueryableExt for T {
         // If no columns specified in request, use all columns from metadata
         let columns_to_return: Vec<T::Column> = if request.columns.is_empty() {
             // Default to visible columns from metadata, sorted by column index
-            let metadata = self.metadata();
+            let metadata = self.metadata(conn);
             let mut visible_cols: Vec<_> = metadata
                 .columns
                 .iter()
@@ -233,22 +242,23 @@ impl<T: TableQueryable> TableQueryableExt for T {
         };
 
         // Execute query
-        builder.execute(&columns_to_return)
+        builder.execute(conn, &columns_to_return)
     }
 
     fn load_table(
         &self,
+        conn: &mut Self::Connection,
         request: AdvancedTableRequest,
         title: String,
         url: String,
     ) -> Result<MainElement, ProtobrixError> {
         // Get metadata
-        let metadata = self.metadata();
+        let metadata = self.metadata(conn);
         // Apply request column configuration to metadata columns if present
         let final_columns = apply_column_configuration(metadata.columns, &request);
 
         // Load rows
-        let rows = self.load_rows(request)?;
+        let rows = self.load_rows(conn, request)?;
 
         // Build MainElement
         let mut builder = AdvancedTableBuilder::new()
@@ -337,6 +347,7 @@ mod tests {
 
     impl TableQueryBuilder for TestQueryBuilder {
         type Column = TestColumn;
+        type Connection = ();
 
         fn search(&mut self, search: &str) -> &mut Self {
             self.search_query = search.to_string();
@@ -374,6 +385,7 @@ mod tests {
 
         fn execute(
             self,
+            _conn: &mut Self::Connection,
             columns: &[Self::Column],
         ) -> Result<Vec<AdvancedTableRow>, ProtobrixError> {
             // Return mock data
@@ -471,8 +483,9 @@ mod tests {
     impl TableQueryable for TestTable {
         type Column = TestColumn;
         type QueryBuilder = TestQueryBuilder;
+        type Connection = ();
 
-        fn metadata(&self) -> TableMetadata {
+        fn metadata(&self, _conn: &mut Self::Connection) -> TableMetadata {
             TableMetadata {
                 columns: vec![
                     AdvancedTableColumnBuilder::new("id", "ID")
@@ -539,7 +552,7 @@ mod tests {
             limit: 10,
         };
 
-        let result = table.load_rows(request);
+        let result = table.load_rows(&mut (), request);
         assert!(result.is_ok());
         let rows = result.unwrap();
         assert_eq!(rows.len(), 2);
@@ -549,6 +562,7 @@ mod tests {
     #[test]
     fn test_load_rows_with_pagination() {
         let table = TestTable;
+        let mut conn = ();
         let request = AdvancedTableRequest {
             columns: vec![
                 AdvancedTableRequestColumn {
@@ -573,7 +587,7 @@ mod tests {
             limit: 1,
         };
 
-        let result = table.load_rows(request);
+        let result = table.load_rows(&mut conn, request);
         assert!(result.is_ok());
         let rows = result.unwrap();
         assert_eq!(rows.len(), 1);
@@ -583,6 +597,7 @@ mod tests {
     #[test]
     fn test_load_rows_with_filter() {
         let table = TestTable;
+        let mut conn = ();
         let request = AdvancedTableRequest {
             columns: vec![AdvancedTableRequestColumn {
                 id: "age".to_string(),
@@ -599,7 +614,7 @@ mod tests {
             limit: 10,
         };
 
-        let result = table.load_rows(request);
+        let result = table.load_rows(&mut conn, request);
         assert!(result.is_ok());
         let rows = result.unwrap();
         assert_eq!(rows.len(), 1);
@@ -608,6 +623,7 @@ mod tests {
     #[test]
     fn test_load_table() {
         let table = TestTable;
+        let mut conn = ();
         let request = AdvancedTableRequest {
             columns: vec![
                 AdvancedTableRequestColumn {
@@ -640,7 +656,12 @@ mod tests {
             limit: 10,
         };
 
-        let result = table.load_table(request, "Test Table".to_string(), "/api/test".to_string());
+        let result = table.load_table(
+            &mut conn,
+            request,
+            "Test Table".to_string(),
+            "/api/test".to_string(),
+        );
         assert!(result.is_ok());
         let main_element = result.unwrap();
         assert_eq!(main_element.title, "Test Table");
@@ -667,6 +688,7 @@ mod tests {
     #[test]
     fn test_hidden_columns() {
         let table = TestTable;
+        let mut conn = ();
         let request = AdvancedTableRequest {
             columns: vec![
                 AdvancedTableRequestColumn {
@@ -699,7 +721,7 @@ mod tests {
             limit: 10,
         };
 
-        let result = table.load_rows(request);
+        let result = table.load_rows(&mut conn, request);
         assert!(result.is_ok());
         let rows = result.unwrap();
         assert_eq!(rows.len(), 2);

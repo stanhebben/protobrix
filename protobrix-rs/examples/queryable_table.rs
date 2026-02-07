@@ -71,6 +71,7 @@ impl UserQueryBuilder {
 
 impl TableQueryBuilder for UserQueryBuilder {
     type Column = UserColumn;
+    type Connection = ();
 
     fn search(&mut self, search: &str) -> &mut Self {
         self.search_query = search.to_string();
@@ -107,7 +108,11 @@ impl TableQueryBuilder for UserQueryBuilder {
         self
     }
 
-    fn execute(self, columns: &[Self::Column]) -> Result<Vec<AdvancedTableRow>, ProtobrixError> {
+    fn execute(
+        self,
+        _conn: &mut Self::Connection,
+        columns: &[Self::Column],
+    ) -> Result<Vec<AdvancedTableRow>, ProtobrixError> {
         let mut filtered_data: Vec<&UserData> = self.data.iter().collect();
 
         // Apply global search
@@ -266,8 +271,9 @@ impl UserTable {
 impl TableQueryable for UserTable {
     type Column = UserColumn;
     type QueryBuilder = UserQueryBuilder;
+    type Connection = ();
 
-    fn metadata(&self) -> TableMetadata {
+    fn metadata(&self, _conn: &mut Self::Connection) -> TableMetadata {
         TableMetadata {
             table_name: "users".to_string(),
             table_filterable: true,
@@ -359,7 +365,12 @@ fn main() {
         limit: 10,
     };
 
-    match table.load_table(&request, "All Users", "/api/users") {
+    match table.load_table(
+        &mut (),
+        request,
+        "All Users".to_string(),
+        "/api/users".to_string(),
+    ) {
         Ok(main_element) => {
             println!("✓ Loaded table: {}", main_element.title);
             if let Some(main_element::Content::AdvancedTable(t)) = main_element.content {
@@ -396,7 +407,7 @@ fn main() {
         limit: 10,
     };
 
-    match table.load_rows(&request) {
+    match table.load_rows(&mut (), request) {
         Ok(rows) => {
             println!("✓ Found {} row(s)", rows.len());
             for row in rows {
@@ -438,7 +449,7 @@ fn main() {
         limit: 10,
     };
 
-    match table.load_rows(&request) {
+    match table.load_rows(&mut (), request) {
         Ok(rows) => {
             println!("✓ Found {} row(s)", rows.len());
             for row in rows {
@@ -472,7 +483,7 @@ fn main() {
         limit: 10,
     };
 
-    match table.load_rows(&request) {
+    match table.load_rows(&mut (), request) {
         Ok(rows) => {
             println!("✓ Found {} row(s) (sorted)", rows.len());
             for row in rows {
@@ -502,7 +513,7 @@ fn main() {
         limit: 2,
     };
 
-    match table.load_rows(&request) {
+    match table.load_rows(&mut (), request) {
         Ok(rows) => {
             println!("✓ Found {} row(s)", rows.len());
             for row in rows {
