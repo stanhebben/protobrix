@@ -1,4 +1,3 @@
-use crate::error::ProtobrixError;
 use crate::proto::*;
 
 /// Builder for Parameter
@@ -201,46 +200,40 @@ impl CodeBlockBuilder {
 pub struct ActionButtonBuilder {
     label: String,
     icon: String,
-    action: Option<action_button::Action>,
+    action: action_button::Action,
 }
 
 impl ActionButtonBuilder {
-    pub fn new(label: impl Into<String>) -> Self {
+    /// Create an action button that navigates to a URL
+    pub fn go_to_url(label: impl Into<String>, url: impl Into<String>) -> Self {
         Self {
             label: label.into(),
             icon: String::new(),
-            action: None,
+            action: action_button::Action::GoToUrl(GoToUrlAction { url: url.into() }),
         }
     }
 
-    pub fn icon(mut self, icon: impl Into<String>) -> Self {
-        self.icon = icon.into();
-        self
+    /// Create an action button that opens a page
+    pub fn open_page(label: impl Into<String>, url: impl Into<String>) -> Self {
+        Self {
+            label: label.into(),
+            icon: String::new(),
+            action: action_button::Action::OpenPage(OpenPageAction { url: url.into() }),
+        }
     }
 
-    pub fn go_to_url(mut self, url: impl Into<String>) -> Self {
-        self.action = Some(action_button::Action::GoToUrl(GoToUrlAction {
-            url: url.into(),
-        }));
-        self
+    /// Create an action button that opens a modal
+    pub fn open_modal(label: impl Into<String>, url: impl Into<String>) -> Self {
+        Self {
+            label: label.into(),
+            icon: String::new(),
+            action: action_button::Action::OpenModal(OpenModalAction { url: url.into() }),
+        }
     }
 
-    pub fn open_page(mut self, url: impl Into<String>) -> Self {
-        self.action = Some(action_button::Action::OpenPage(OpenPageAction {
-            url: url.into(),
-        }));
-        self
-    }
-
-    pub fn open_modal(mut self, url: impl Into<String>) -> Self {
-        self.action = Some(action_button::Action::OpenModal(OpenModalAction {
-            url: url.into(),
-        }));
-        self
-    }
-
+    /// Create an action button that opens a confirmation modal
     pub fn open_confirmation_modal(
-        mut self,
+        label: impl Into<String>,
         action_url: impl Into<String>,
         url_method: UrlMethod,
         title: impl Into<String>,
@@ -248,51 +241,61 @@ impl ActionButtonBuilder {
         confirm_button_label: impl Into<String>,
         cancel_button_label: impl Into<String>,
     ) -> Self {
-        self.action = Some(action_button::Action::OpenConfirmationModal(
-            OpenConfirmationModalAction {
+        Self {
+            label: label.into(),
+            icon: String::new(),
+            action: action_button::Action::OpenConfirmationModal(OpenConfirmationModalAction {
                 title: title.into(),
                 message: message.into(),
                 confirm_button_label: confirm_button_label.into(),
                 cancel_button_label: cancel_button_label.into(),
                 action_url: action_url.into(),
                 url_method: url_method as i32,
-            },
-        ));
-        self
+            }),
+        }
     }
 
-    pub fn builtin_action(mut self, action: impl Into<String>) -> Self {
-        self.action = Some(action_button::Action::BuiltinAction(RunBuiltinAction {
-            action: action.into(),
-            parameters: Vec::new(),
-        }));
-        self
+    /// Create an action button that runs a builtin action
+    pub fn builtin_action(label: impl Into<String>, action: impl Into<String>) -> Self {
+        Self {
+            label: label.into(),
+            icon: String::new(),
+            action: action_button::Action::BuiltinAction(RunBuiltinAction {
+                action: action.into(),
+                parameters: Vec::new(),
+            }),
+        }
     }
 
+    /// Create an action button that runs a builtin action with parameters
     pub fn builtin_action_with_params(
-        mut self,
+        label: impl Into<String>,
         action: impl Into<String>,
         parameters: Vec<Parameter>,
     ) -> Self {
-        self.action = Some(action_button::Action::BuiltinAction(RunBuiltinAction {
-            action: action.into(),
-            parameters,
-        }));
+        Self {
+            label: label.into(),
+            icon: String::new(),
+            action: action_button::Action::BuiltinAction(RunBuiltinAction {
+                action: action.into(),
+                parameters,
+            }),
+        }
+    }
+
+    /// Set the icon for the button
+    pub fn icon(mut self, icon: impl Into<String>) -> Self {
+        self.icon = icon.into();
         self
     }
 
-    pub fn build(self) -> Result<ActionButton, ProtobrixError> {
-        if self.action.is_none() {
-            return Err(ProtobrixError::Builder(
-                "ActionButton must have an action".to_string(),
-            ));
-        }
-
-        Ok(ActionButton {
+    /// Build the ActionButton
+    pub fn build(self) -> ActionButton {
+        ActionButton {
             label: self.label,
             icon: self.icon,
-            action: self.action,
-        })
+            action: Some(self.action),
+        }
     }
 }
 

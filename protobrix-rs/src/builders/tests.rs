@@ -47,11 +47,9 @@ mod tests {
 
     #[test]
     fn test_action_button_builder() {
-        let button = ActionButtonBuilder::new("Click me")
+        let button = ActionButtonBuilder::go_to_url("Click me", "/home")
             .icon("fas:check")
-            .go_to_url("/home")
-            .build()
-            .unwrap();
+            .build();
 
         assert_eq!(button.label, "Click me");
         assert_eq!(button.icon, "fas:check");
@@ -59,12 +57,39 @@ mod tests {
     }
 
     #[test]
-    fn test_action_button_requires_action() {
-        let result = ActionButtonBuilder::new("Click me")
-            .icon("fas:check")
-            .build();
+    fn test_action_button_all_action_types() {
+        // Test go_to_url
+        let button = ActionButtonBuilder::go_to_url("Go", "/home").build();
+        assert_eq!(button.label, "Go");
+        assert!(button.action.is_some());
 
-        assert!(result.is_err());
+        // Test open_page
+        let button = ActionButtonBuilder::open_page("Open", "/page").build();
+        assert_eq!(button.label, "Open");
+        assert!(button.action.is_some());
+
+        // Test open_modal
+        let button = ActionButtonBuilder::open_modal("Modal", "/modal").build();
+        assert_eq!(button.label, "Modal");
+        assert!(button.action.is_some());
+
+        // Test builtin_action
+        let button = ActionButtonBuilder::builtin_action("Action", "test").build();
+        assert_eq!(button.label, "Action");
+        assert!(button.action.is_some());
+
+        // Test builtin_action_with_params
+        let button = ActionButtonBuilder::builtin_action_with_params(
+            "Action",
+            "test",
+            vec![Parameter {
+                name: "key".to_string(),
+                value: "value".to_string(),
+            }],
+        )
+        .build();
+        assert_eq!(button.label, "Action");
+        assert!(button.action.is_some());
     }
 
     #[test]

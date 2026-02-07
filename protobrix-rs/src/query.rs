@@ -82,15 +82,15 @@ pub trait TableQueryableExt: TableQueryable {
     /// Load rows based on an AdvancedTableRequest
     fn load_rows(
         &self,
-        request: &AdvancedTableRequest,
+        request: AdvancedTableRequest,
     ) -> Result<Vec<AdvancedTableRow>, ProtobrixError>;
 
     /// Load a complete MainElement based on an AdvancedTableRequest
     fn load_table(
         &self,
-        request: &AdvancedTableRequest,
-        title: &str,
-        url: &str,
+        request: AdvancedTableRequest,
+        title: String,
+        url: String,
     ) -> Result<MainElement, ProtobrixError>;
 }
 
@@ -145,7 +145,7 @@ fn apply_column_configuration(
 impl<T: TableQueryable> TableQueryableExt for T {
     fn load_rows(
         &self,
-        request: &AdvancedTableRequest,
+        request: AdvancedTableRequest,
     ) -> Result<Vec<AdvancedTableRow>, ProtobrixError> {
         let mut builder = self.query_builder();
 
@@ -238,25 +238,24 @@ impl<T: TableQueryable> TableQueryableExt for T {
 
     fn load_table(
         &self,
-        request: &AdvancedTableRequest,
-        title: &str,
-        url: &str,
+        request: AdvancedTableRequest,
+        title: String,
+        url: String,
     ) -> Result<MainElement, ProtobrixError> {
-        // Load rows
-        let rows = self.load_rows(request)?;
-
         // Get metadata
         let metadata = self.metadata();
+        // Apply request column configuration to metadata columns if present
+        let final_columns = apply_column_configuration(metadata.columns, &request);
+
+        // Load rows
+        let rows = self.load_rows(request)?;
 
         // Build MainElement
         let mut builder = AdvancedTableBuilder::new()
             .title(title)
             .url(url)
             .filterable(metadata.table_filterable)
-            .name(&metadata.table_name);
-
-        // Apply request column configuration to metadata columns if present
-        let final_columns = apply_column_configuration(metadata.columns, request);
+            .name(metadata.table_name);
 
         // Add columns
         for column in final_columns {
@@ -540,7 +539,7 @@ mod tests {
             limit: 10,
         };
 
-        let result = table.load_rows(&request);
+        let result = table.load_rows(request);
         assert!(result.is_ok());
         let rows = result.unwrap();
         assert_eq!(rows.len(), 2);
@@ -574,7 +573,7 @@ mod tests {
             limit: 1,
         };
 
-        let result = table.load_rows(&request);
+        let result = table.load_rows(request);
         assert!(result.is_ok());
         let rows = result.unwrap();
         assert_eq!(rows.len(), 1);
@@ -600,7 +599,7 @@ mod tests {
             limit: 10,
         };
 
-        let result = table.load_rows(&request);
+        let result = table.load_rows(request);
         assert!(result.is_ok());
         let rows = result.unwrap();
         assert_eq!(rows.len(), 1);
@@ -641,7 +640,7 @@ mod tests {
             limit: 10,
         };
 
-        let result = table.load_table(&request, "Test Table", "/api/test");
+        let result = table.load_table(request, "Test Table".to_string(), "/api/test".to_string());
         assert!(result.is_ok());
         let main_element = result.unwrap();
         assert_eq!(main_element.title, "Test Table");
@@ -700,7 +699,7 @@ mod tests {
             limit: 10,
         };
 
-        let result = table.load_rows(&request);
+        let result = table.load_rows(request);
         assert!(result.is_ok());
         let rows = result.unwrap();
         assert_eq!(rows.len(), 2);

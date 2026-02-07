@@ -6,11 +6,9 @@ async fn static_page() -> MainElement {
     StaticPageBuilder::new()
         .title("Welcome Page")
         .add_action_button(
-            ActionButtonBuilder::new("Go Home")
+            ActionButtonBuilder::go_to_url("Go Home", "/")
                 .icon("fas:home")
-                .go_to_url("/")
-                .build()
-                .unwrap(),
+                .build(),
         )
         .add_paragraph(
             ParagraphBuilder::new()
@@ -44,11 +42,9 @@ async fn simple_table() -> MainElement {
     SimpleTableBuilder::new()
         .title("User List")
         .add_action_button(
-            ActionButtonBuilder::new("Add User")
+            ActionButtonBuilder::open_modal("Add User", "/add-user")
                 .icon("fas:plus")
-                .open_modal("/add-user")
-                .build()
-                .unwrap(),
+                .build(),
         )
         .add_header_row(
             SimpleTableRowBuilder::header()
@@ -80,11 +76,9 @@ async fn advanced_table() -> MainElement {
         .title("Advanced User Table")
         .url("/api/users/data")
         .add_action_button(
-            ActionButtonBuilder::new("Export")
+            ActionButtonBuilder::go_to_url("Export", "/api/users/export")
                 .icon("fas:download")
-                .go_to_url("/api/users/export")
-                .build()
-                .unwrap(),
+                .build(),
         )
         .add_column(
             AdvancedTableColumnBuilder::new("id", "ID")
@@ -132,11 +126,9 @@ async fn advanced_table() -> MainElement {
                 .add_string_cell("john@example.com")
                 .add_int_cell(30)
                 .add_action_button(
-                    ActionButtonBuilder::new("Edit")
+                    ActionButtonBuilder::open_modal("Edit", "/edit-user/1")
                         .icon("fas:edit")
-                        .open_modal("/edit-user/1")
-                        .build()
-                        .unwrap(),
+                        .build(),
                 )
                 .build(),
         )
@@ -147,11 +139,9 @@ async fn advanced_table() -> MainElement {
                 .add_string_cell("jane@example.com")
                 .add_int_cell(25)
                 .add_action_button(
-                    ActionButtonBuilder::new("Edit")
+                    ActionButtonBuilder::open_modal("Edit", "/edit-user/2")
                         .icon("fas:edit")
-                        .open_modal("/edit-user/2")
-                        .build()
-                        .unwrap(),
+                        .build(),
                 )
                 .build(),
         )

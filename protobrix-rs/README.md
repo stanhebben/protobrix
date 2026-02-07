@@ -317,14 +317,38 @@ ListBuilder::new()
 #### ActionButtonBuilder
 
 ```rust
-ActionButtonBuilder::new("Button Label")
+// Navigate to URL
+ActionButtonBuilder::go_to_url("Button Label", "/url")
     .icon("fas:check")
-    .go_to_url("/url")                    // Navigate to URL
-    // Or: .open_page("/url")             // Open page
-    // Or: .open_modal("/url")            // Open modal
-    // Or: .open_confirmation_modal(...)  // Open confirmation dialog
-    // Or: .builtin_action("action_name") // Run builtin action
-    .build()?                              // Returns Result<ActionButton, ProtobrixError>
+    .build()
+
+// Open page
+ActionButtonBuilder::open_page("Button Label", "/url")
+    .icon("fas:check")
+    .build()
+
+// Open modal
+ActionButtonBuilder::open_modal("Button Label", "/url")
+    .icon("fas:check")
+    .build()
+
+// Open confirmation dialog
+ActionButtonBuilder::open_confirmation_modal(
+    "Delete",
+    "/api/delete",
+    UrlMethod::Post,
+    "Confirm Delete",
+    "Are you sure?",
+    "Yes, Delete",
+    "Cancel"
+)
+    .icon("fas:trash")
+    .build()
+
+// Run builtin action
+ActionButtonBuilder::builtin_action("Button Label", "action_name")
+    .icon("fas:check")
+    .build()
 ```
 
 **Builtin Actions with Parameters:**
@@ -333,31 +357,30 @@ ActionButtonBuilder::new("Button Label")
 use protobrix_rs::{ActionButtonBuilder, parameters};
 
 // Simple builtin action without parameters
-ActionButtonBuilder::new("Create User")
+ActionButtonBuilder::builtin_action("Create User", "create_user")
     .icon("fas:user-plus")
-    .builtin_action("create_user")
-    .build()?
+    .build()
 
 // Builtin action with parameters using the macro
-ActionButtonBuilder::new("Edit User")
+ActionButtonBuilder::builtin_action_with_params(
+    "Edit User",
+    "edit_user",
+    parameters! {
+        "user_id" => "123",
+        "mode" => "edit",
+    }
+)
     .icon("fas:edit")
-    .builtin_action_with_params(
-        "edit_user",
-        parameters! {
-            "user_id" => "123",
-            "mode" => "edit",
-        }
-    )
-    .build()?
+    .build()
 
 // Builtin action with parameters using the helper function
-ActionButtonBuilder::new("Delete Item")
+ActionButtonBuilder::builtin_action_with_params(
+    "Delete Item",
+    "delete_item",
+    vec![parameter("item_id", "456")]
+)
     .icon("fas:trash")
-    .builtin_action_with_params(
-        "delete_item",
-        vec![parameter("item_id", "456")]
-    )
-    .build()?
+    .build()
 ```
 
 #### SimpleTableRowBuilder

@@ -205,11 +205,9 @@ impl TableQueryBuilder for UserQueryBuilder {
                 AdvancedTableRow {
                     cells,
                     action_buttons: vec![
-                        ActionButtonBuilder::new("Edit")
+                        ActionButtonBuilder::open_modal("Edit", &format!("/edit-user/{}", user.id))
                             .icon("fas:edit")
-                            .open_modal(&format!("/edit-user/{}", user.id))
-                            .build()
-                            .unwrap(),
+                            .build(),
                     ],
                     row_action: None,
                 }
